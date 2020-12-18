@@ -7,6 +7,57 @@
 open Printf
 open Option
 
+(* Read a file and return the Pcap.HDR header reader module and Cstruct.t with file contents *)
+val read_header : string -> (module Pcap.HDR) Cstruct.t
+
+(* Convert 6-byte mac address to human-readable string *)
+val mac_to_string : Cstruct.t -> string
+
+(* Convert tcp flags byte to human-readable string *)
+val tcp_flags_to_string : int -> string
+
+(* Nested record type for packet headers *)
+type ethernet = {
+    src : Cstruct.t ;
+    dst : Cstruct.t ;
+    ethertype : int ;
+}
+type ipv4 = {
+    src : Ipaddr.V4.t ;
+    dst : Ipaddr.V4.t ;
+    proto : int ;
+}
+type l4 = {
+    sport : int ;
+    dport : int ;
+    flags : int ;
+}
+type pkt = {
+    ethernet : ethernet ;
+    ipv4 : ipv4 ;
+    l4 : l4 ;
+}
+
+(* Parse packet into nested record *)
+val parse_pkt : Cstruct.t -> pkt
+
+(* Module signature for operations *)
+module type PcapOperation =
+sig
+    (* Intermediate type produced in fold *)
+    type t
+
+    (* Return the initial value *)
+    val init : unit -> t 
+
+    (* Process one packet *)
+    val proc : (module Pcap.HDR) -> Cstruct.t -> Cstruct.t -> t -> t
+
+    (* Print summary after fold completes *)
+    val final : t -> unit
+end
+
+
 let open_file filename = 
     let fd = Unix.(openfile filename [O_RDONLY] 0) in
     let ba = Bigarray.(array1_of_genarray (Mmap.V1.map_file fd Bigarray.char c_layout false [|-1|])) in
@@ -85,29 +136,6 @@ let tcp_flags_to_string flags =
     ) ""
 )
 
-type ethernet = {
-    src : Cstruct.t ;
-    dst : Cstruct.t ;
-    ethertype : int ;
-}
-
-type ipv4 = {
-    src : Ipaddr.V4.t ;
-    dst : Ipaddr.V4.t ;
-    proto : int ;
-}
-
-type l4 = {
-    sport : int ;
-    dport : int ;
-    flags : int ;
-}
-
-type pkt = {
-    ethernet : ethernet ;
-    ipv4 : ipv4 ;
-    l4 : l4 ;
-}
 
 let parse_ethernet eth = {
     src = get_ethernet_src eth ;
@@ -145,4 +173,7 @@ let parse_pkt p =
             Some {ethernet ; ipv4 ; l4}
         | x -> (printf "unknown ip proto %d " x; None)
         )
-    | x -> (printf "unknown ethertype %x " x; None)
+    | x -> (printf "unknown ethertype 0x%x " x; None)
+
+
+
