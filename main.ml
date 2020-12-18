@@ -12,10 +12,11 @@ open Windows
  *)
 module DumpOperation =
 struct
-    type t = unit
-    let init () = ()
-    let proc {time ; ethernet ; ipv4 ; l4} () =
-        printf "[%f] ether %s -> %s | ip %s -> %s (%d) | l4 %s %d -> %d\n"
+    type t = int
+    let init () = 1
+    let proc {time ; ethernet ; ipv4 ; l4} a =
+        printf "%d [%f] ether %s -> %s | ip %s -> %s (%d) | l4 %s %d -> %d\n"
+            a
             time
             (mac_to_string ethernet.src)
             (mac_to_string ethernet.dst)
@@ -24,7 +25,8 @@ struct
             ipv4.proto
             (tcp_flags_to_string l4.flags)
             l4.sport
-            l4.dport
+            l4.dport;
+        a + 1
 
     let final _ =
         printf "Done."
@@ -49,7 +51,7 @@ let fold_file op filename =
         (Cstruct.fold
             (fun a (hdr,pkt) -> match (parse_pkt h hdr pkt) with
                 | Some p -> Mod.proc p a
-                | None -> printf "Failed to parse packet\n" ; a)
+                | None -> a)
             (packets h body)
             (Mod.init ()))
         |> Mod.final

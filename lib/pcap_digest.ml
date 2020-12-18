@@ -139,25 +139,29 @@ let tcp_flags_to_string flags =
 )
 
 
-let parse_ethernet eth = {
+let parse_ethernet eth =
+{
     src = get_ethernet_src eth ;
     dst = get_ethernet_dst eth ;
     ethertype = get_ethernet_ethertype eth;
 }
 
-let parse_ipv4 ip = {
+let parse_ipv4 ip = 
+{
     src = Ipaddr.V4.of_int32 (get_ipv4_src ip);
     dst = Ipaddr.V4.of_int32 (get_ipv4_dst ip);
     proto = get_ipv4_proto ip;
 }
 
-let parse_tcp tcp = {
+let parse_tcp tcp = 
+{
     sport = get_tcp_src_port tcp;
     dport = get_tcp_dst_port tcp;
     flags = (get_tcp_offset_flags tcp) land 0xFF;
 }
 
-let parse_udp udp = {
+let parse_udp udp =
+{
     sport = get_udp_src_port udp;
     dport = get_udp_dst_port udp;
     flags = 0;
@@ -167,17 +171,21 @@ let parse_pkt h hdr p =
     let module H = (val h: Pcap.HDR) in
     let time = (Int32.to_float (H.get_pcap_packet_ts_sec hdr)) +. (Int32.to_float (H.get_pcap_packet_ts_usec hdr)) /. 1000000. in
     let ethernet = parse_ethernet p in
-    match ethernet.ethertype with
-    | 0x0800 ->
-        let ipv4 = parse_ipv4 (Cstruct.shift p sizeof_ethernet) in
-        (match ipv4.proto with
-        | 6 -> let l4 = parse_tcp (Cstruct.shift p (sizeof_ethernet+sizeof_ipv4)) in
-            Some {time ; ethernet ; ipv4 ; l4}
-        | 17 -> let l4 = parse_udp (Cstruct.shift p (sizeof_ethernet+sizeof_ipv4)) in
-            Some {time ; ethernet ; ipv4 ; l4}
-        | x -> (printf "unknown ip proto %d " x; None)
-        )
-    | x -> (printf "unknown ethertype 0x%x " x; None)
+    try
+        match ethernet.ethertype with
+        | 0x0800 ->
+            let ipv4 = parse_ipv4 (Cstruct.shift p sizeof_ethernet) in
+            (match ipv4.proto with
+            | 6 -> let l4 = parse_tcp (Cstruct.shift p (sizeof_ethernet+sizeof_ipv4)) in
+                Some {time ; ethernet ; ipv4 ; l4}
+            | 17 -> let l4 = parse_udp (Cstruct.shift p (sizeof_ethernet+sizeof_ipv4)) in
+                Some {time ; ethernet ; ipv4 ; l4}
+            | _ -> None
+            )
+        | _ -> None
+    with
+        Invalid_argument _ -> None
+            (* ...some packets in CAIDA traces are not as big as we expect which causes Cstruct to throw this: just ignore for now *)
 
 
 
