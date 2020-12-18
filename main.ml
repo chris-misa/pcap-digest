@@ -56,9 +56,10 @@ let fold_file op filename =
     | Some (module Mod) ->
         let h, buf = read_header filename in
         let module H = (val h: Pcap.HDR) in
-        let _, body = Cstruct.split buf sizeof_pcap_header in
+        let header, body = Cstruct.split buf sizeof_pcap_header in
+        let network = Int32.to_int (H.get_pcap_header_network header) in
         (Cstruct.fold
-            (fun a (hdr,pkt) -> match (parse_pkt h hdr pkt) with
+            (fun a (hdr,pkt) -> match (parse_pkt network h hdr pkt) with
                 | Some p -> Mod.proc p a
                 | None -> a)
             (packets h body)

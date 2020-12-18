@@ -23,9 +23,10 @@ type ethernet = {
     ethertype : int ;
 }
 type ipv4 = {
+    hlen : int ;
+    proto : int ;
     src : Ipaddr.V4.t ;
     dst : Ipaddr.V4.t ;
-    proto : int ;
 }
 type l4 = {
     sport : int ;
@@ -148,9 +149,10 @@ let parse_ethernet eth =
 
 let parse_ipv4 ip = 
 {
+    hlen = (get_ipv4_hlen_version ip) land 0xF;
+    proto = get_ipv4_proto ip;
     src = Ipaddr.V4.of_int32 (get_ipv4_src ip);
     dst = Ipaddr.V4.of_int32 (get_ipv4_dst ip);
-    proto = get_ipv4_proto ip;
 }
 
 let parse_tcp tcp = 
@@ -167,22 +169,33 @@ let parse_udp udp =
     flags = 0;
 }
 
-let parse_pkt h hdr p = 
+
+let get_ip_version eth = 
+    ((Cstruct.get_uint8 eth sizeof_ethernet) land 0xf0) lsr 4
+
+
+let parse_pkt network h hdr p = 
     let module H = (val h: Pcap.HDR) in
     let time = (Int32.to_float (H.get_pcap_packet_ts_sec hdr)) +. (Int32.to_float (H.get_pcap_packet_ts_usec hdr)) /. 1000000. in
-    let ethernet = parse_ethernet p in
+    let ethernet, offset = (
+        match network with
+        | 1 -> (parse_ethernet p, sizeof_ethernet)
+        | 101 -> (Cstruct.({src=create 6;dst=create 6;ethertype=0x0800}), 0) (* IP only *)
+        | x -> failwith (sprintf "Unknown pcap network value: %d" x)
+    ) in
     try
-        match ethernet.ethertype with
-        | 0x0800 ->
-            let ipv4 = parse_ipv4 (Cstruct.shift p sizeof_ethernet) in
-            (match ipv4.proto with
-            | 6 -> let l4 = parse_tcp (Cstruct.shift p (sizeof_ethernet+sizeof_ipv4)) in
-                Some {time ; ethernet ; ipv4 ; l4}
-            | 17 -> let l4 = parse_udp (Cstruct.shift p (sizeof_ethernet+sizeof_ipv4)) in
-                Some {time ; ethernet ; ipv4 ; l4}
-            | _ -> None
-            )
-        | _ -> None
+        let ipv4, offset = (
+            match get_ip_version p with
+            | 4 -> let ipv4 = parse_ipv4 (Cstruct.shift p offset) in (ipv4, offset + ipv4.hlen * 4)
+            | _ -> raise (Invalid_argument "")
+        ) in
+        let l4 = (
+            match ipv4.proto with
+            | 6 -> parse_tcp (Cstruct.shift p offset)
+            | 17 -> parse_udp (Cstruct.shift p offset)
+            | _ -> raise (Invalid_argument "")
+        ) in
+        Some { time ; ethernet ; ipv4 ; l4 }
     with
         Invalid_argument _ -> None
             (* ...some packets in CAIDA traces are not as big as we expect which causes Cstruct to throw this: just ignore for now *)
