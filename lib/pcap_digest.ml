@@ -35,7 +35,7 @@ type l4 = {
 }
 type pkt = {
     time : float ;
-    ethernet : ethernet ;
+    ethernet : ethernet option ;
     ipv4 : ipv4 ;
     l4 : l4 ;
 }
@@ -170,8 +170,8 @@ let parse_udp udp =
 }
 
 
-let get_ip_version eth = 
-    ((Cstruct.get_uint8 eth sizeof_ethernet) land 0xf0) lsr 4
+let get_ip_version eth offset = 
+    ((Cstruct.get_uint8 eth offset) land 0xF0) lsr 4
 
 
 let parse_pkt network h hdr p = 
@@ -179,14 +179,14 @@ let parse_pkt network h hdr p =
     let time = (Int32.to_float (H.get_pcap_packet_ts_sec hdr)) +. (Int32.to_float (H.get_pcap_packet_ts_usec hdr)) /. 1000000. in
     let ethernet, offset = (
         match network with
-        | 1 -> (parse_ethernet p, sizeof_ethernet)
-        | 101 -> (Cstruct.({src=create 6;dst=create 6;ethertype=0x0800}), 0) (* IP only *)
+        | 1 -> (Some (parse_ethernet p), sizeof_ethernet)
+        | 101 -> (None, 0)
         | x -> failwith (sprintf "Unknown pcap network value: %d" x)
     ) in
     try
         let ipv4, offset = (
-            match get_ip_version p with
-            | 4 -> let ipv4 = parse_ipv4 (Cstruct.shift p offset) in (ipv4, offset + ipv4.hlen * 4)
+            match get_ip_version p offset with
+            | 4 -> let ipv4 = parse_ipv4 (Cstruct.shift p offset) in (ipv4, offset + (ipv4.hlen * 4))
             | _ -> raise (Invalid_argument "")
         ) in
         let l4 = (
