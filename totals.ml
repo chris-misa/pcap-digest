@@ -8,7 +8,7 @@ open Pcap_digest
 
 
 (*
- * Initially, just count the number of all destinations
+ * Keep track of and count all destinations
  *)
 module Dsts =
 struct

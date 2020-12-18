@@ -43,7 +43,8 @@ end
 module OpsMap = Map.Make(String)
 let ops_map = OpsMap.of_seq (List.to_seq [
     ("dump", (module DumpOperation : PcapOperation)) ;
-    ("dsts", (module Window.Dsts : PcapOperation)) ;
+    ("window.dsts", (module Windows.Dsts : PcapOperation)) ;
+    ("total.dsts", (module Totals.Dsts : PcapOperation)) ;
 ])
 
 

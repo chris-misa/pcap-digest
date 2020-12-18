@@ -8,13 +8,13 @@ open Printf
 open Option
 
 (* Read a file and return the Pcap.HDR header reader module and Cstruct.t with file contents *)
-val read_header : string -> (module Pcap.HDR) Cstruct.t
+(* val read_header : string -> ((module Pcap.HDR) * Cstruct.t) *)
 
 (* Convert 6-byte mac address to human-readable string *)
-val mac_to_string : Cstruct.t -> string
+(* val mac_to_string : Cstruct.t -> string *)
 
 (* Convert tcp flags byte to human-readable string *)
-val tcp_flags_to_string : int -> string
+(* val tcp_flags_to_string : int -> string *)
 
 (* Nested record type for packet headers *)
 type ethernet = {
@@ -39,7 +39,7 @@ type pkt = {
 }
 
 (* Parse packet into nested record *)
-val parse_pkt : Cstruct.t -> pkt
+(* val parse_pkt : Cstruct.t -> pkt *)
 
 (* Module signature for operations *)
 module type PcapOperation =
