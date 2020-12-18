@@ -43,10 +43,19 @@ let ops_map = OpsMap.of_seq (List.to_seq [
     ("total.dsts", (module Totals.Dsts : PcapOperation)) ;
 ])
 
+let print_type filename = 
+    let h, buf = read_header filename in
+    let module H = (val h: Pcap.HDR) in
+    let header, _ = Cstruct.split buf sizeof_pcap_header in
+    printf "header.network: %lu\n" (H.get_pcap_header_network header)
+
 let fold_file op filename = 
+    if op = "network.type" then print_type filename
+    else
     match OpsMap.find_opt op ops_map with
     | Some (module Mod) ->
         let h, buf = read_header filename in
+        let module H = (val h: Pcap.HDR) in
         let _, body = Cstruct.split buf sizeof_pcap_header in
         (Cstruct.fold
             (fun a (hdr,pkt) -> match (parse_pkt h hdr pkt) with
