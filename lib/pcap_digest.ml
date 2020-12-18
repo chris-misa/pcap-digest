@@ -33,6 +33,7 @@ type l4 = {
     flags : int ;
 }
 type pkt = {
+    time : float ;
     ethernet : ethernet ;
     ipv4 : ipv4 ;
     l4 : l4 ;
@@ -51,12 +52,13 @@ sig
     val init : unit -> t 
 
     (* Process one packet *)
-    val proc : (module Pcap.HDR) -> Cstruct.t -> Cstruct.t -> t -> t
+    val proc : pkt -> t -> t
 
     (* Print summary after fold completes *)
     val final : t -> unit
 end
 
+module IPv4Set = Set.Make(Ipaddr.V4)
 
 let open_file filename = 
     let fd = Unix.(openfile filename [O_RDONLY] 0) in
@@ -161,16 +163,18 @@ let parse_udp udp = {
     flags = 0;
 }
 
-let parse_pkt p = 
+let parse_pkt h hdr p = 
+    let module H = (val h: Pcap.HDR) in
+    let time = (Int32.to_float (H.get_pcap_packet_ts_sec hdr)) +. (Int32.to_float (H.get_pcap_packet_ts_usec hdr)) /. 1000000. in
     let ethernet = parse_ethernet p in
     match ethernet.ethertype with
     | 0x0800 ->
         let ipv4 = parse_ipv4 (Cstruct.shift p sizeof_ethernet) in
         (match ipv4.proto with
         | 6 -> let l4 = parse_tcp (Cstruct.shift p (sizeof_ethernet+sizeof_ipv4)) in
-            Some {ethernet ; ipv4 ; l4}
+            Some {time ; ethernet ; ipv4 ; l4}
         | 17 -> let l4 = parse_udp (Cstruct.shift p (sizeof_ethernet+sizeof_ipv4)) in
-            Some {ethernet ; ipv4 ; l4}
+            Some {time ; ethernet ; ipv4 ; l4}
         | x -> (printf "unknown ip proto %d " x; None)
         )
     | x -> (printf "unknown ethertype 0x%x " x; None)
