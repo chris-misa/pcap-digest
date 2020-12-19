@@ -29,7 +29,6 @@ let window op () =
     }
 
 
-(* WindowOperation to count distinct destinations *)
 let dsts () =
     let m = ref IPv4Set.empty in
     {

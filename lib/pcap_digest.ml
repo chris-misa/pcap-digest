@@ -43,6 +43,7 @@ type pkt = {
 (* Parse packet into nested record *)
 (* val parse_pkt : Cstruct.t -> pkt *)
 
+(* Operation interface (put in a closure to hold state) *)
 type operation = {
     proc : pkt -> unit ;
     final : unit -> unit ;
