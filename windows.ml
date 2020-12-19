@@ -8,41 +8,31 @@ open Pcap_digest
 let epoch_dur = 2.
 
 
-(* Driver for WindowOperation modules *)
-module Window (Op : PcapOperation) = 
-struct
-    type t = (float * Op.t) list
-
-    let init () = 
-        [(0., Op.init ())]
-
-    let proc p state =
-        match state with
-        | ((epoch,m)::tl) ->
-            let new_m = Op.proc p m in
-            if epoch = 0.
-            then (p.time +. epoch_dur, new_m)::tl
-            else if p.time < epoch
-            then (epoch, new_m)::tl
-            else (printf "%f " epoch ; Op.final m ; printf "\n" ; (epoch +. epoch_dur, Op.proc p (Op.init ()))::(epoch,m)::tl)
-        | [] -> failwith "Internal error: uninitialized state!"
-
-    let final _ = ()
-end
+let window op () =
+    let o = ref (op ()) in
+    let epoch = ref 0. in
+    {
+        proc = (fun p ->
+            if !epoch = 0.
+            then epoch := p.time +. epoch_dur
+            else if p.time >= !epoch
+            then (
+                printf "%f " !epoch ;
+                (!o).final () ;
+                printf "\n" ;
+                epoch := !epoch +. epoch_dur ;
+                o := op () ;
+            );
+            (!o).proc p ;
+        );
+        final = (fun () -> printf "Done\n") ;
+    }
 
 
 (* WindowOperation to count distinct destinations *)
-module Dsts =
-struct
-    type t = IPv4Set.t
-
-    let init () =
-        IPv4Set.empty
-
-    let proc {ipv4 ; _} m =
-        IPv4Set.add ipv4.dst m
-
-    let final m =
-        printf "%d" (IPv4Set.cardinal m)
-
-end
+let dsts () =
+    let m = ref IPv4Set.empty in
+    {
+        proc = (fun {ipv4 ; _} -> m := IPv4Set.add ipv4.dst !m) ;
+        final = (fun () -> printf "%d" (IPv4Set.cardinal !m)) ;
+    }

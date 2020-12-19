@@ -43,21 +43,10 @@ type pkt = {
 (* Parse packet into nested record *)
 (* val parse_pkt : Cstruct.t -> pkt *)
 
-(* Module signature for operations *)
-module type PcapOperation =
-sig
-    (* Intermediate type produced in fold *)
-    type t
-
-    (* Return the initial value *)
-    val init : unit -> t 
-
-    (* Process one packet *)
-    val proc : pkt -> t -> t
-
-    (* Print summary after fold completes *)
-    val final : t -> unit
-end
+type operation = {
+    proc : pkt -> unit ;
+    final : unit -> unit ;
+}
 
 module IPv4Set = Set.Make(Ipaddr.V4)
 
