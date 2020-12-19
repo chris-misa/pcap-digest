@@ -33,5 +33,12 @@ let dsts () =
     let m = ref IPv4Set.empty in
     {
         proc = (fun {ipv4 ; _} -> m := IPv4Set.add ipv4.dst !m) ;
-        final = (fun () -> printf "%d" (IPv4Set.cardinal !m)) ;
+        final = (fun () -> printf "dsts %d" (IPv4Set.cardinal !m)) ;
+    }
+
+let srcs () =
+    let m = ref IPv4Set.empty in
+    {
+        proc = (fun {ipv4 ; _} -> m := IPv4Set.add ipv4.src !m) ;
+        final = (fun () -> printf "srcs %d" (IPv4Set.cardinal !m)) ;
     }

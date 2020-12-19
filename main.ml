@@ -49,6 +49,7 @@ module OpsMap = Map.Make(String)
 let ops_map = OpsMap.of_seq (List.to_seq [
     ("dump", dump) ;
     ("window.dsts", Windows.window Windows.dsts) ;
+    ("window.srcs", Windows.window Windows.srcs) ;
     ("total.dsts", Totals.dsts) ;
 ])
 
