@@ -35,7 +35,7 @@ let windows ops outc =
         final = (fun () -> close_out outc) ;
     }
 
-
+(* Count distinct sources *)
 let srcs outc =
     let m = ref IPv4Set.empty in
     {
@@ -44,6 +44,7 @@ let srcs outc =
         final = (fun () -> fprintf outc "%d," (IPv4Set.cardinal !m)) ;
     }
 
+(* Count distinct destinations *)
 let dsts outc =
     let m = ref IPv4Set.empty in
     {
@@ -52,17 +53,50 @@ let dsts outc =
         final = (fun () -> fprintf outc "%d," (IPv4Set.cardinal !m)) ;
     }
 
-module IPv4TupleSet = Set.Make(
-    struct
-        type t = Ipaddr.V4.t * Ipaddr.V4.t
-        let compare (x1,y1) (x2,y2) = compare (x1,y1) (x2,y2)
-    end
-)
 
+(* Count distinct source, destination pairs *)
 let src_dsts outc =
+    let module IPv4TupleSet = Set.Make(
+        struct
+            type t = Ipaddr.V4.t * Ipaddr.V4.t
+            let compare a b = compare a b
+        end
+    ) in
     let m = ref IPv4TupleSet.empty in
     {
         name = "srcdsts" ;
-        proc = (fun {ipv4 ; _} -> m := IPv4TupleSet.add (ipv4.src,ipv4.dst) !m) ;
+        proc = (fun {ipv4 ; _} -> m := IPv4TupleSet.add (ipv4.src, ipv4.dst) !m) ;
         final = (fun () -> fprintf outc "%d," (IPv4TupleSet.cardinal !m)) ;
     }
+
+(* Count distinct source, destination, packet size tuples *)
+let src_dst_lens outc = 
+    let module MSet = Set.Make(
+        struct
+            type t = Ipaddr.V4.t * Ipaddr.V4.t * int
+            let compare a b = compare a b
+        end
+    ) in
+    let m = ref MSet.empty in
+    {
+        name = "srcdstlens" ;
+        proc = (fun {ipv4 ; _} -> m := MSet.add (ipv4.src, ipv4.dst, ipv4.len) !m) ;
+        final = (fun () -> fprintf outc "%d," (MSet.cardinal !m)) ;
+    }
+
+(* Count distinct source, destination port pairs *)
+let src_dports outc = 
+    let module MSet = Set.Make(
+        struct
+            type t = Ipaddr.V4.t * int
+            let compare a b = compare a b
+        end
+    ) in
+    let m = ref MSet.empty in
+    {
+        name = "srcdport" ;
+        proc = (fun {ipv4 ; l4 ; _} -> m := MSet.add (ipv4.src, l4.dport) !m) ;
+        final = (fun () -> fprintf outc "%d," (MSet.cardinal !m)) ;
+    }
+
+(* ..... should go for a generic count distinct suboperation parameterized by distinct key *)

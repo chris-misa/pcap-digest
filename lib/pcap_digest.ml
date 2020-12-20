@@ -25,6 +25,7 @@ type ethernet = {
 type ipv4 = {
     hlen : int ;
     proto : int ;
+    len : int ;
     src : Ipaddr.V4.t ;
     dst : Ipaddr.V4.t ;
 }
@@ -142,6 +143,7 @@ let parse_ipv4 ip =
 {
     hlen = (get_ipv4_hlen_version ip) land 0xF;
     proto = get_ipv4_proto ip;
+    len = get_ipv4_len ip;
     src = Ipaddr.V4.of_int32 (get_ipv4_src ip);
     dst = Ipaddr.V4.of_int32 (get_ipv4_dst ip);
 }

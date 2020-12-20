@@ -19,6 +19,7 @@ let ops_map = OpsMap.of_seq (List.to_seq [
     ("window.dsts", Windows.windows [Windows.dsts]) ;
     ("window.srcdsts", Windows.windows [Windows.src_dsts]) ;
     ("window.srcs.dsts", Windows.windows [Windows.srcs ; Windows.dsts]) ;
+    ("window.srcdstlens", Windows.windows [Windows.src_dsts ; Windows.src_dst_lens]) ;
 ])
 
 let fold_file ops_string filename = 
