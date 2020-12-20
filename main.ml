@@ -9,13 +9,13 @@ open Pcap_digest
 (*
  * Example operation constructor to dump per-packet header info
  *)
-let dump () =
+let dump outc =
     let a = ref 0 in
     {
         proc  = (fun {time ; ethernet ; ipv4 ; l4} ->
             (match ethernet with
             | Some ether ->
-                printf "%d [%f] ether %s -> %s | ip %s -> %s (%d) | l4 %s %d -> %d\n"
+                fprintf outc "%d [%f] ether %s -> %s | ip %s -> %s (%d) | l4 %s %d -> %d\n"
                     !a
                     time
                     (mac_to_string ether.src)
@@ -27,7 +27,7 @@ let dump () =
                     l4.sport
                     l4.dport
             | None ->
-                printf "%d [%f] ip %s -> %s (%d) | l4 %s %d -> %d\n"
+                fprintf outc "%d [%f] ip %s -> %s (%d) | l4 %s %d -> %d\n"
                     !a
                     time
                     (Ipaddr.V4.to_string ipv4.src)
@@ -38,7 +38,7 @@ let dump () =
                     l4.dport
             );
             incr a) ;
-        final = (fun () -> printf "Done.") ;
+        final = (fun () -> close_out outc) ;
     }
 
 (*
@@ -78,7 +78,8 @@ let fold_file ops_string filename =
     (* printf "header.network: %lu\n" (H.get_pcap_header_network header); *)
 
     (* Main fold *)
-    (List.map (fun op_con -> op_con ()) op_cons) |>
+    (List.combine op_keys op_cons) |>
+    (List.map (fun (op_key, op_con) -> op_con (open_out (op_key ^ ".out")))) |>
     (Cstruct.fold
         (fun ops (hdr,pkt) -> (
         match (parse_pkt network h hdr pkt) with
