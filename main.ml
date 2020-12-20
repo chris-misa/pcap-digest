@@ -7,52 +7,18 @@ open Option
 open Pcap_digest
 
 (*
- * Example operation constructor to dump per-packet header info
- *)
-let dump outc =
-    let a = ref 0 in
-    {
-        proc  = (fun {time ; ethernet ; ipv4 ; l4} ->
-            (match ethernet with
-            | Some ether ->
-                fprintf outc "%d [%f] ether %s -> %s | ip %s -> %s (%d) | l4 %s %d -> %d\n"
-                    !a
-                    time
-                    (mac_to_string ether.src)
-                    (mac_to_string ether.dst)
-                    (Ipaddr.V4.to_string ipv4.src)
-                    (Ipaddr.V4.to_string ipv4.dst)
-                    ipv4.proto
-                    (tcp_flags_to_string l4.flags)
-                    l4.sport
-                    l4.dport
-            | None ->
-                fprintf outc "%d [%f] ip %s -> %s (%d) | l4 %s %d -> %d\n"
-                    !a
-                    time
-                    (Ipaddr.V4.to_string ipv4.src)
-                    (Ipaddr.V4.to_string ipv4.dst)
-                    ipv4.proto
-                    (tcp_flags_to_string l4.flags)
-                    l4.sport
-                    l4.dport
-            );
-            incr a) ;
-        final = (fun () -> close_out outc) ;
-    }
-
-(*
  * Main mapping from cli operation strings to associated implementations
  * Add new operation constructors here
  *)
 module OpsMap = Map.Make(String)
 let ops_map = OpsMap.of_seq (List.to_seq [
-    ("dump", dump) ;
-    ("window.dsts", Windows.windows [Windows.dsts]) ;
+    ("dump", Dump.dump) ;
+    ("total.srcs", Totals.srcs) ;
+    ("total.dsts", Totals.dsts) ;
     ("window.srcs", Windows.windows [Windows.srcs]) ;
+    ("window.dsts", Windows.windows [Windows.dsts]) ;
     ("window.srcdsts", Windows.windows [Windows.src_dsts]) ;
     ("window.srcs.dsts", Windows.windows [Windows.srcs ; Windows.dsts]) ;
-    ("total.dsts", Totals.dsts) ;
 ])
 
 let fold_file ops_string filename = 
