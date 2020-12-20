@@ -8,8 +8,8 @@ open Pcap_digest
 let epoch_dur = 2.
 
 
-let window op () =
-    let o = ref (op ()) in
+let windows ops () =
+    let os = ref (List.map (fun op_con -> op_con ()) ops) in
     let epoch = ref 0. in
     {
         proc = (fun p ->
@@ -18,27 +18,41 @@ let window op () =
             else if p.time >= !epoch
             then (
                 printf "%f," !epoch ;
-                (!o).final () ;
+                List.iter (fun o -> o.final ()) !os ;
                 printf "\n" ;
                 epoch := !epoch +. epoch_dur ;
-                o := op () ;
+                os := (List.map (fun op_con -> op_con ()) ops) ;
             );
-            (!o).proc p ;
+            List.iter (fun o -> o.proc p) !os ;
         );
         final = (fun () -> ()) ;
     }
 
 
-let dsts () =
-    let m = ref IPv4Set.empty in
-    {
-        proc = (fun {ipv4 ; _} -> m := IPv4Set.add ipv4.dst !m) ;
-        final = (fun () -> printf "dsts,%d" (IPv4Set.cardinal !m)) ;
-    }
-
 let srcs () =
     let m = ref IPv4Set.empty in
     {
         proc = (fun {ipv4 ; _} -> m := IPv4Set.add ipv4.src !m) ;
-        final = (fun () -> printf "srcs,%d" (IPv4Set.cardinal !m)) ;
+        final = (fun () -> printf "%d," (IPv4Set.cardinal !m)) ;
+    }
+
+let dsts () =
+    let m = ref IPv4Set.empty in
+    {
+        proc = (fun {ipv4 ; _} -> m := IPv4Set.add ipv4.dst !m) ;
+        final = (fun () -> printf "%d," (IPv4Set.cardinal !m)) ;
+    }
+
+module IPv4TupleSet = Set.Make(
+    struct
+        type t = Ipaddr.V4.t * Ipaddr.V4.t
+        let compare (x1,y1) (x2,y2) = compare (x1,y1) (x2,y2)
+    end
+)
+
+let src_dsts () =
+    let m = ref IPv4TupleSet.empty in
+    {
+        proc = (fun {ipv4 ; _} -> m := IPv4TupleSet.add (ipv4.src,ipv4.dst) !m) ;
+        final = (fun () -> printf "%d," (IPv4TupleSet.cardinal !m)) ;
     }
