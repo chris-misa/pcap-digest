@@ -45,6 +45,7 @@ type pkt = {
 
 (* Operation interface (put in a closure to hold state) *)
 type operation = {
+    name : string ;
     proc : pkt -> unit ;
     final : unit -> unit ;
 }

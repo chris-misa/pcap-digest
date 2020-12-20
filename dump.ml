@@ -1,3 +1,4 @@
+open Printf
 open Pcap_digest
 
 (*
@@ -6,6 +7,7 @@ open Pcap_digest
 let dump outc =
     let a = ref 0 in
     {
+        name = "dump" ;
         proc  = (fun {time ; ethernet ; ipv4 ; l4} ->
             (match ethernet with
             | Some ether ->

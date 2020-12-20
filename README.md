@@ -1,8 +1,9 @@
 # pcap-digest
 
 Here is a framework for packet-level analysis of pcap files.
-The framework can run multiple 'operations' which are defined by two functions `proc` and `final`.
+The framework can run multiple 'operations' which are defined by two functions `proc` and `final` and a `name` field.
 For each running operation, the framework calls `proc` for each packet, passing a nicely parsed record of packet headers, and `final` once all packets have been processed.
+The `name` field is used only for identifying particular operations outputs.
 Operations are instantiated by operation constructors which take zero or more constructor arguments followed by an output channel and return a record with `proc` and `final` members.
 Constructors use closures to encapsulate any state they need to maintain between calls to `proc` and `final`.
 
