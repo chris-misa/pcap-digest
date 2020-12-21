@@ -12,11 +12,10 @@ let init_hash_size = 10000
  * Runs a list of operations per-epoch, calling final () (which should also reset state) after each epoch
  *)
 let windows ops outc =
-    let call_con = fun op_con -> op_con outc in
-    let os = ref (List.map call_con ops) in
+    let os = List.map (fun op_con -> op_con outc) ops in
     let epoch = ref 0. in
     fprintf outc "time," ;
-    List.iter (fun o -> fprintf outc "%s," o.name) !os;
+    List.iter (fun o -> fprintf outc "%s," o.name) os;
     fprintf outc "\n" ;
     {
         name = "window" ;
@@ -26,11 +25,11 @@ let windows ops outc =
             else if p.time >= !epoch
             then (
                 fprintf outc "%f," !epoch ;
-                List.iter (fun o -> o.final ()) !os ;
+                List.iter (fun o -> o.final ()) os ;
                 fprintf outc "\n" ;
                 epoch := !epoch +. epoch_dur ;
             );
-            List.iter (fun o -> o.proc p) !os ;
+            List.iter (fun o -> o.proc p) os ;
         );
         final = (fun () -> close_out outc) ;
     }
