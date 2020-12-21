@@ -30,7 +30,7 @@ let ops_map = OpsMap.of_seq (List.to_seq [
         ])) ;
 ])
 
-let fold_file ops_string filename = 
+let fold_file ops_string out_prefix filename = 
     
     (* Parse operation list and look up modules *)
     let op_keys = String.split_on_char ',' ops_string in
@@ -54,7 +54,7 @@ let fold_file ops_string filename =
 
     (* Main fold *)
     (List.combine op_keys op_cons) |>
-    (List.map (fun (op_key, op_con) -> op_con (open_out (op_key ^ ".out")))) |>
+    (List.map (fun (op_key, op_con) -> op_con (open_out (out_prefix ^ op_key ^ ".out")))) |>
     (Cstruct.fold
         (fun ops (hdr,pkt) -> (
         match (parse_pkt network h hdr pkt) with
@@ -70,6 +70,6 @@ let fold_file ops_string filename =
  * Main entrypoint
  *)
 let () =
-    if Array.length Sys.argv = 3
-    then fold_file Sys.argv.(1) Sys.argv.(2)
-    else printf "Expected <operation> <capture file> as first arguments.\n"
+    if Array.length Sys.argv = 4
+    then fold_file Sys.argv.(1) Sys.argv.(2) Sys.argv.(3)
+    else printf "Expected <operation list> <outfile prefix> <capture file> as first arguments.\n"
