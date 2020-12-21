@@ -15,12 +15,19 @@ let ops_map = OpsMap.of_seq (List.to_seq [
     ("dump", Dump.dump) ;
     ("total.srcs", Totals.srcs) ;
     ("total.dsts", Totals.dsts) ;
-    ("window.srcs", Windows.windows [Windows.srcs]) ;
-    ("window.dsts", Windows.windows [Windows.dsts]) ;
-    ("window.srcdsts", Windows.windows [Windows.src_dsts]) ;
-    ("window.srcs.dsts", Windows.windows [Windows.srcs ; Windows.dsts]) ;
-    ("window.srcdstlens", Windows.windows [Windows.src_dsts ; Windows.src_dst_lens]) ;
-    ("window.all", Windows.(windows [srcs ; dsts ; src_dsts ; src_dst_lens ; src_dports ; src_dst_dports])) ;
+    ("window.srcs", Windows.(windows [distinct (fun p -> p.ipv4.src) "srcs"])) ;
+    ("window.dsts", Windows.(windows [distinct (fun p -> p.ipv4.dst) "dsts"])) ;
+    ("window.srcdsts", Windows.(windows [distinct (fun p -> (p.ipv4.src, p.ipv4.dst)) "srcdsts"])) ;
+    ("window.srcs.dsts", Windows.(windows [distinct (fun p -> p.ipv4.src) "srcs" ; distinct (fun p -> p.ipv4.dst) "dsts"])) ;
+    ("window.srcdstlens", Windows.(windows [distinct (fun p -> (p.ipv4.src, p.ipv4.dst, p.ipv4.len)) "srcdstlens"])) ;
+    ("window.all", Windows.(windows [
+            distinct (fun p -> p.ipv4.src) "srcs" ;
+            distinct (fun p -> p.ipv4.dst) "dsts" ;
+            distinct (fun p -> (p.ipv4.src, p.ipv4.dst)) "srcdsts" ;
+            distinct (fun p -> (p.ipv4.src, p.ipv4.dst, p.ipv4.len)) "srcdstlens" ;
+            distinct (fun p -> (p.ipv4.src, p.l4.dport)) "srcdports" ;
+            distinct (fun p -> (p.ipv4.src, p.ipv4.dst, p.l4.sport)) "srcdstsport" ;
+        ])) ;
 ])
 
 let fold_file ops_string filename = 
