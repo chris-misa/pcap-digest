@@ -99,4 +99,22 @@ let src_dports outc =
         final = (fun () -> fprintf outc "%d," (MSet.cardinal !m)) ;
     }
 
+
+(* Count distinct source, destination, source port pairs *)
+let src_dst_dports outc = 
+    let module MSet = Set.Make(
+        struct
+            type t = Ipaddr.V4.t * Ipaddr.V4.t * int
+            let compare a b = compare a b
+        end
+    ) in
+    let m = ref MSet.empty in
+    {
+        name = "srcdstsport" ;
+        proc = (fun {ipv4 ; l4 ; _} -> m := MSet.add (ipv4.src, ipv4.dst, l4.sport) !m) ;
+        final = (fun () -> fprintf outc "%d," (MSet.cardinal !m)) ;
+    }
+
+
+
 (* ..... should go for a generic count distinct suboperation parameterized by distinct key *)
