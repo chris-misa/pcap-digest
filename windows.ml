@@ -9,7 +9,7 @@ let epoch_dur = 2.
 let init_hash_size = 10000
 
 (*
- * Runs a list of operations per-epoch, calling final () and resetting their state after each epoch
+ * Runs a list of operations per-epoch, calling final () (which should also reset state) after each epoch
  *)
 let windows ops outc =
     let call_con = fun op_con -> op_con outc in
@@ -29,7 +29,6 @@ let windows ops outc =
                 List.iter (fun o -> o.final ()) !os ;
                 fprintf outc "\n" ;
                 epoch := !epoch +. epoch_dur ;
-                os := (List.map call_con ops) ;
             );
             List.iter (fun o -> o.proc p) !os ;
         );
@@ -46,7 +45,10 @@ let distinct f name outc =
     {
         name = name ;
         proc = (fun p -> Hashtbl.replace m (f p) true) ;
-        final = (fun () -> fprintf outc "%d," (Hashtbl.length m)) ;
+        final = (fun () ->
+            fprintf outc "%d," (Hashtbl.length m) ;
+            Hashtbl.clear m ;
+        ) ;
     }
 
 
