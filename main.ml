@@ -26,7 +26,7 @@ let ops_map = OpsMap.of_seq (List.to_seq [
             distinct (fun p -> (p.ipv4.src, p.ipv4.dst)) "srcdsts" ;
             distinct (fun p -> (p.ipv4.src, p.ipv4.dst, p.ipv4.len)) "srcdstlens" ;
             distinct (fun p -> (p.ipv4.src, p.l4.dport)) "srcdports" ;
-            distinct (fun p -> (p.ipv4.src, p.ipv4.dst, p.l4.sport)) "srcdstsport" ;
+            distinct (fun p -> (p.ipv4.src, p.ipv4.dst, p.l4.sport)) "srcdstsports" ;
         ])) ;
 ])
 
