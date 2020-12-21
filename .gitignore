@@ -8,6 +8,8 @@
 *.cmxs
 *.cmxa
 
+OUTPUTS/
+
 *.exe
 *.out
 
