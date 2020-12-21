@@ -5,9 +5,16 @@
 N=6
 i=0
 
-IN_PATH="/home/switch_proj/CAIDA/HEADERS_FIVEMINUTE/*.pcap"
-OUT_PATH="OUTPUTS"
-COMMAND="./main.exe window.all"
+IN_PATH="$1"
+OUT_PATH="../OUTPUTS"
+COMMAND="../main.exe window.all"
+
+[[ $# -eq 1 ]] || {
+    echo "Requires single argument pointing to data...use single quotes to pass patterns"
+    exit
+}
+
+trap 'kill $(jobs -p)' EXIT
 
 for f in $IN_PATH
 do
