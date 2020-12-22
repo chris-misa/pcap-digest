@@ -3,9 +3,13 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-DATA_FILE="../OUTPUTS/combined.out"
-PLOT_FILE="../OUTPUTS/plot.pdf"
-TITLE=sys.argv[1] if len(sys.argv) == 2 else ""
+if len(sys.argv) != 4:
+    print("Usage: <data file in> <plot file out> <plot title>")
+    sys.exit()
+
+DATA_FILE=sys.argv[1]
+PLOT_FILE=sys.argv[2]
+TITLE=sys.argv[3]
 
 cols = {
     "time" : 0,
@@ -27,6 +31,9 @@ for k, v in cols.items():
     if k != "time":
         ax.plot(data[:,cols["time"]], data[:,v], label=k)
 ax.legend()
+
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Count")
 
 plt.title(TITLE)
 plt.yscale("log")
