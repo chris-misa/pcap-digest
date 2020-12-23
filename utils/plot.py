@@ -10,6 +10,7 @@ if len(sys.argv) != 4:
 DATA_FILE=sys.argv[1]
 PLOT_FILE=sys.argv[2]
 TITLE=sys.argv[3]
+HORZ_LEGEND=True
 
 cols = {
     "time" : 0,
@@ -30,7 +31,11 @@ ax.grid()
 for k, v in cols.items():
     if k != "time":
         ax.plot(data[:,cols["time"]], data[:,v], label=k)
-ax.legend()
+
+if HORZ_LEGEND:
+    ax.legend(ncol=len(cols), fontsize="small")
+else:
+    ax.legend()
 
 ax.set_xlabel("Time (s)")
 ax.set_ylabel("Count")
