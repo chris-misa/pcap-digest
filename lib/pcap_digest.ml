@@ -53,7 +53,7 @@ type op_result =
 type operation = {
     name : string ;
     proc : pkt -> unit ;
-    final : unit -> op_result ;
+    final : unit -> op_result ; (* Note: for state-ful operations, final() should reset state (e.g., for the next epoch) *)
 }
 
 let string_of_op_result res = match res with   
