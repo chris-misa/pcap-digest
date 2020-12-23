@@ -25,13 +25,13 @@ let windows ops outc =
             else if p.time >= !epoch
             then (
                 fprintf outc "%f," !epoch ;
-                List.iter (fun o -> o.final ()) os ;
+                List.iter (fun o -> fprintf outc "%s," (string_of_op_result (o.final ()))) os ;
                 fprintf outc "\n" ;
                 epoch := !epoch +. epoch_dur ;
             );
             List.iter (fun o -> o.proc p) os ;
         );
-        final = (fun () -> close_out outc) ;
+        final = (fun () -> close_out outc; Empty) ;
     }
 
 
@@ -39,14 +39,15 @@ let windows ops outc =
  * Returns a count of distinct elements
  * Distinction is determined by the return value of f on each packet
  *)
-let distinct f name outc = 
+let distinct f name _ = 
     let m = Hashtbl.create init_hash_size in
     {
         name = name ;
         proc = (fun p -> Hashtbl.replace m (f p) true) ;
         final = (fun () ->
-            fprintf outc "%d," (Hashtbl.length m) ;
+            let res = Hashtbl.length m in
             Hashtbl.clear m ;
+            Int res
         ) ;
     }
 

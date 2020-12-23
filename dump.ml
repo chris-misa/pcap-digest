@@ -34,5 +34,5 @@ let dump outc =
                     l4.dport
             );
             incr a) ;
-        final = (fun () -> close_out outc) ;
+        final = (fun () -> close_out outc; Empty) ;
     }

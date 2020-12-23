@@ -28,6 +28,11 @@ let ops_map = OpsMap.of_seq (List.to_seq [
             distinct (fun p -> (p.ipv4.src, p.l4.dport)) "srcdports" ;
             distinct (fun p -> (p.ipv4.src, p.ipv4.dst, p.l4.sport)) "srcdstsports" ;
         ])) ;
+    ("sampling.srcs", Windows.(windows [
+            Sampling.psample 0.5 (distinct (fun p -> p.ipv4.src) "src.50") ;
+            Sampling.psample 0.75 (distinct (fun p -> p.ipv4.src) "src.75") ;
+            distinct (fun p -> p.ipv4.src) "src.100" ;
+        ])) ;
 ])
 
 let fold_file ops_string out_prefix filename = 
@@ -64,7 +69,7 @@ let fold_file ops_string out_prefix filename =
         )
         (packets h body)
     ) |>
-    (List.iter (fun op -> op.final ()))
+    (List.iter (fun op -> printf "%s : %s\n" op.name (string_of_op_result (op.final ()))))
 
 (*
  * Main entrypoint

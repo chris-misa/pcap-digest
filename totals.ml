@@ -14,9 +14,10 @@ let srcs outc =
         name = "srcs" ;
         proc = (fun {ipv4 ; _} -> m := IPv4Set.add ipv4.src !m) ;
         final = (fun () ->
+            let res = IPv4Set.cardinal !m in
             IPv4Set.fold (fun ip _ -> fprintf outc "%s\n" (Ipaddr.V4.to_string ip)) !m () ;
-            fprintf outc "total: %d\n" (IPv4Set.cardinal !m) ;
             close_out outc ;
+            Int res
         ) ;
     }
 (*
@@ -28,8 +29,9 @@ let dsts outc =
         name = "dsts" ;
         proc = (fun {ipv4 ; _} -> m := IPv4Set.add ipv4.dst !m) ;
         final = (fun () ->
+            let res = IPv4Set.cardinal !m in
             IPv4Set.fold (fun ip _ -> fprintf outc "%s\n" (Ipaddr.V4.to_string ip)) !m () ;
-            fprintf outc "total: %d\n" (IPv4Set.cardinal !m) ;
             close_out outc ;
+            Int res
         ) ;
     }

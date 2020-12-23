@@ -44,12 +44,27 @@ type pkt = {
 (* Parse packet into nested record *)
 (* val parse_pkt : Cstruct.t -> pkt *)
 
+type op_result = 
+      Float of float
+    | Int of int
+    | Empty
+
 (* Operation interface (put in a closure to hold state) *)
 type operation = {
     name : string ;
     proc : pkt -> unit ;
-    final : unit -> unit ;
+    final : unit -> op_result ;
 }
+
+let string_of_op_result res = match res with   
+    | Float(n) -> sprintf "%f" n
+    | Int(n) -> sprintf "%d" n
+    | Empty -> "empty"
+
+let float_of_op_result res = match res with
+    | Float(n) -> n
+    | Int(n) -> float_of_int n
+    | Empty -> 0.0
 
 module IPv4Set = Set.Make(Ipaddr.V4)
 
