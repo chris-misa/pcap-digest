@@ -38,6 +38,11 @@ let ops_map = OpsMap.of_seq (List.to_seq [
             Sampling.fsample 0.75 (distinct (fun p -> p.ipv4.src) "src.75") ;
             distinct (fun p -> p.ipv4.src) "src.100" ;
         ])) ;
+    ("esample.srcs", Windows.(windows [
+            Sampling.esample 8 4 (distinct (fun p -> p.ipv4.src) "src.50") ;
+            Sampling.esample 8 6 (distinct (fun p -> p.ipv4.src) "src.75") ;
+            distinct (fun p -> p.ipv4.src) "src.100" ;
+        ])) ;
 ])
 
 let fold_file ops_string out_prefix filename = 

@@ -13,14 +13,14 @@ let init_hash_size = 10000
  *)
 let windows ops outc =
     let os = List.map (fun op_con -> op_con outc) ops in
-    let epoch = ref 0. in
+    let epoch = ref 0.0 in
     fprintf outc "time," ;
     List.iter (fun o -> fprintf outc "%s," o.name) os;
     fprintf outc "\n" ;
     {
         name = "window" ;
         proc = (fun p ->
-            if !epoch = 0.
+            if !epoch = 0.0
             then epoch := p.time +. epoch_dur
             else if p.time >= !epoch
             then (
